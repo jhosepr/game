@@ -2,47 +2,77 @@ using UnityEngine;
 
 public class Enemy : MonoBehaviour
 {
+    [Header("Configuración")]
     public float velocidad = 3f;
     public float daño = 10f;
+    public float distanciaAtaque = 1.8f;
+    public float tiempoEntreAtaques = 1.2f;
+
     private Transform player;
+    private Rigidbody rb;
+    private Animator anim;
+    private float cronometroAtaque;
 
     void Start()
     {
-        // Buscamos al jugador por su Tag. 
-        // ¡RECUERDA que tu Player en la jerarquía DEBE tener el Tag "Player"!
+        rb = GetComponent<Rigidbody>();
+        anim = GetComponentInChildren<Animator>();
+
         GameObject target = GameObject.FindGameObjectWithTag("Player");
         if (target != null) player = target.transform;
+
+        rb.freezeRotation = true;
+
+        // [NUEVO] Inicializamos el cronómetro al máximo para que el primer golpe sea inmediato
+        cronometroAtaque = tiempoEntreAtaques;
     }
 
-    void Update()
+    void FixedUpdate()
     {
-        if (player != null)
+        if (player == null) return;
+
+        float distancia = Vector3.Distance(transform.position, player.position);
+
+        // 1. Mirar al jugador
+        Vector3 posJugador = new Vector3(player.position.x, transform.position.y, player.position.z);
+        transform.LookAt(posJugador);
+
+        // 2. IA de Movimiento y Ataque
+        if (distancia > distanciaAtaque)
         {
-            // 1. Mirar al jugador (solo gira en el eje Y para no inclinarse)
-            Vector3 posJugador = new Vector3(player.position.x, transform.position.y, player.position.z);
-            transform.LookAt(posJugador);
+            // Caminar
+            Vector3 movimiento = transform.forward * velocidad * Time.fixedDeltaTime;
+            rb.MovePosition(rb.position + movimiento);
 
-            // 2. Movimiento constante hacia adelante
-            transform.Translate(Vector3.forward * velocidad * Time.deltaTime);
+            if (anim != null) anim.SetBool("isWalking", true);
 
-            // 3. ANCLA DE ALTURA: Esto sustituye al "Freeze Position Y" que te daba crash.
-            // Forzamos a que el enemigo siempre esté a ras de suelo (ajusta el 1f si queda muy arriba)
-            Vector3 tempPos = transform.position;
-            tempPos.y = 1f;
-            transform.position = tempPos;
+            // [OPCIONAL] Si quieres que al alejarte se "resetee" el golpe, descomenta la línea de abajo
+            // cronometroAtaque = tiempoEntreAtaques; 
         }
-    }
-
-    // Al chocar con el jugador, le quitamos vida
-    private void OnCollisionStay(Collision collision)
-    {
-        if (collision.gameObject.CompareTag("Player"))
+        else
         {
-            Player playerScript = collision.gameObject.GetComponent<Player>();
-            if (playerScript != null)
+            // Detenerse y Atacar
+            if (anim != null) anim.SetBool("isWalking", false);
+
+            cronometroAtaque += Time.fixedDeltaTime;
+
+            if (cronometroAtaque >= tiempoEntreAtaques)
             {
-                playerScript.TakeDamage(daño * Time.deltaTime);
+                AtacarRapido();
+                cronometroAtaque = 0;
             }
         }
+    }
+
+    void AtacarRapido()
+    {
+        if (anim != null)
+        {
+            anim.ResetTrigger("attack");
+            anim.SetTrigger("attack");
+        }
+
+        Player playerScript = player.GetComponent<Player>();
+        if (playerScript != null) playerScript.TakeDamage(daño);
     }
 }

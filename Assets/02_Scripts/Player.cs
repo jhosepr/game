@@ -1,6 +1,6 @@
 using UnityEngine;
 using UnityEngine.UI;
-using UnityEngine.SceneManagement; // <-- IMPORTANTE: Para cambiar de escena
+using UnityEngine.SceneManagement;
 
 public class Player : MonoBehaviour
 {
@@ -9,6 +9,9 @@ public class Player : MonoBehaviour
     public float runSpeed = 10f;
     public float rotationSpeed = 15f;
     private float currentSpeed;
+
+    // Agregamos una referencia a la cámara
+    private Transform mainCameraTransform;
 
     [Header("Sistema de Estamina")]
     public float maxStamina = 100f;
@@ -26,11 +29,17 @@ public class Player : MonoBehaviour
     public Image barraEstaminaRelleno;
 
     private Rigidbody rb;
+    private Animator anim;
 
     void Start()
     {
         rb = GetComponent<Rigidbody>();
         rb.freezeRotation = true;
+        anim = GetComponentInChildren<Animator>();
+
+        // Obtenemos la cámara principal al inicio
+        if (Camera.main != null)
+            mainCameraTransform = Camera.main.transform;
 
         currentSpeed = walkSpeed;
         currentStamina = maxStamina;
@@ -45,38 +54,63 @@ public class Player : MonoBehaviour
 
     void FixedUpdate()
     {
-        float moveX = 0;
-        float moveZ = 0;
+        float moveX = Input.GetAxisRaw("Horizontal");
+        float moveZ = Input.GetAxisRaw("Vertical");
 
-        if (Input.GetKey(KeyCode.W)) moveZ = 1;
-        if (Input.GetKey(KeyCode.S)) moveZ = -1;
-        if (Input.GetKey(KeyCode.A)) moveX = -1;
-        if (Input.GetKey(KeyCode.D)) moveX = 1;
+        Vector3 inputDir = new Vector3(moveX, 0, moveZ).normalized;
+        Vector3 moveDir = Vector3.zero;
 
-        Vector3 moveDir = new Vector3(moveX, 0, moveZ).normalized;
-        Vector3 nextPos;
-
-        if (moveDir.magnitude >= 0.1f)
+        // LÓGICA DE MOVIMIENTO RELATIVO A LA CÁMARA
+        if (inputDir.magnitude >= 0.1f && mainCameraTransform != null)
         {
-            nextPos = rb.position + moveDir * currentSpeed * Time.fixedDeltaTime;
+            // Calculamos la dirección hacia donde apunta la cámara en el plano horizontal
+            Vector3 camForward = mainCameraTransform.forward;
+            Vector3 camRight = mainCameraTransform.right;
+
+            camForward.y = 0; // Evitamos que el jugador quiera volar o enterrarse
+            camRight.y = 0;
+
+            camForward.Normalize();
+            camRight.Normalize();
+
+            // La dirección de movimiento final basada en los ejes de la cámara
+            moveDir = (camForward * inputDir.z + camRight * inputDir.x).normalized;
+        }
+
+        bool moviendose = moveDir.magnitude >= 0.1f;
+        if (anim != null)
+        {
+            anim.SetBool("isWalking", moviendose);
+        }
+
+        if (moviendose)
+        {
+            Vector3 nextPos = rb.position + moveDir * currentSpeed * Time.fixedDeltaTime;
+            rb.MovePosition(nextPos);
+
+            // Rotación suave hacia la dirección de movimiento
             Quaternion targetRotation = Quaternion.LookRotation(moveDir);
             rb.rotation = Quaternion.Slerp(rb.rotation, targetRotation, rotationSpeed * Time.fixedDeltaTime);
         }
         else
         {
-            nextPos = rb.position;
             rb.linearVelocity = new Vector3(0, rb.linearVelocity.y, 0);
             rb.angularVelocity = Vector3.zero;
         }
-
-        nextPos.y = 1.0f; // Tu ancla de seguridad para Unity 6
-        rb.MovePosition(nextPos);
     }
 
+    // El resto de tus funciones (HandleStamina, ActualizarInterfaz, etc.) se mantienen igual
     void HandleStamina()
     {
-        bool isMoving = Input.GetKey(KeyCode.W) || Input.GetKey(KeyCode.S) || Input.GetKey(KeyCode.A) || Input.GetKey(KeyCode.D);
+        bool isMoving = Input.GetAxisRaw("Horizontal") != 0 || Input.GetAxisRaw("Vertical") != 0;
         bool isRunning = Input.GetKey(KeyCode.LeftShift) && isMoving && !isExhausted;
+
+        // --- AGREGA ESTO AQUÍ ---
+        if (anim != null)
+        {
+            anim.SetBool("isRunning", isRunning);
+        }
+        // ------------------------
 
         if (isRunning)
         {
@@ -100,22 +134,18 @@ public class Player : MonoBehaviour
             barraEstaminaRelleno.fillAmount = currentStamina / maxStamina;
     }
 
-    // --- ESTA ES LA FUNCIÓN QUE CAMBIA TODO ---
     public void TakeDamage(float amount)
     {
         currentHealth -= amount;
-
         if (currentHealth <= 0)
         {
             currentHealth = 0;
-            Morir(); // Llamamos a la función de muerte
+            Morir();
         }
     }
 
     void Morir()
     {
-        Debug.Log("Cargando escena de Game Over...");
-        // Asegúrate de que el nombre entre comillas sea EXACTO al de tu escena en la carpeta 01_Scenes
         SceneManager.LoadScene("GameOver");
     }
 }
