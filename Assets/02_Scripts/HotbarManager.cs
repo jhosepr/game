@@ -5,12 +5,21 @@ public class HotbarManager : MonoBehaviour
 {
     [Header("Referencias de UI")]
     public RectTransform[] slots;
+    public Image[] iconosUI;
+
+    [Header("Sprites de Plantas")]
+    public Sprite spritePera;
+    public Sprite spriteCactus;
+    public Sprite spriteFlor;
+
+    [Header("Inventario")]
+    public GameObject[] plantasEnSlots = new GameObject[6];
 
     [Header("Configuración del Efecto")]
     public float escalaSeleccionado = 1.25f;
     public float velocidadCambio = 12f;
 
-    private int currentSlotIndex = -1; // Empezamos en -1 (nada seleccionado)
+    private int currentSlotIndex = -1;
     private Vector3 escalaOriginal;
 
     void Start()
@@ -19,11 +28,16 @@ public class HotbarManager : MonoBehaviour
         {
             escalaOriginal = slots[0].localScale;
         }
+
+        // Al inicio todos los iconos son transparentes
+        foreach (Image img in iconosUI)
+        {
+            if (img != null) img.color = new Color(1, 1, 1, 0);
+        }
     }
 
     void Update()
     {
-        // Detectar teclas del 1 al 6
         if (Input.GetKeyDown(KeyCode.Alpha1)) IntentarCambiarODeseleccionar(0);
         if (Input.GetKeyDown(KeyCode.Alpha2)) IntentarCambiarODeseleccionar(1);
         if (Input.GetKeyDown(KeyCode.Alpha3)) IntentarCambiarODeseleccionar(2);
@@ -34,19 +48,52 @@ public class HotbarManager : MonoBehaviour
         SuavizarEscalas();
     }
 
+    public void RecibirPlantaComprada(GameObject prefabPlanta)
+    {
+        for (int i = 0; i < plantasEnSlots.Length; i++)
+        {
+            if (plantasEnSlots[i] == null)
+            {
+                plantasEnSlots[i] = prefabPlanta;
+                if (iconosUI[i] != null)
+                {
+                    iconosUI[i].sprite = ObtenerSpritePorNombre(prefabPlanta.name);
+                    iconosUI[i].color = new Color(1, 1, 1, 1);
+                }
+                return;
+            }
+        }
+    }
+
+    Sprite ObtenerSpritePorNombre(string nombre)
+    {
+        if (nombre.Contains("Tier2")) return spriteCactus;
+        if (nombre.Contains("Tier3")) return spriteFlor;
+        return spritePera;
+    }
+
+    // Devuelve la planta del slot seleccionado
+    public GameObject ObtenerPlantaSeleccionada()
+    {
+        if (currentSlotIndex >= 0 && currentSlotIndex < plantasEnSlots.Length)
+            return plantasEnSlots[currentSlotIndex];
+        return null;
+    }
+
+    // Quita la planta del inventario tras sembrar
+    public void ConsumirPlantaActual()
+    {
+        if (currentSlotIndex >= 0)
+        {
+            plantasEnSlots[currentSlotIndex] = null;
+            if (iconosUI[currentSlotIndex] != null)
+                iconosUI[currentSlotIndex].color = new Color(1, 1, 1, 0);
+        }
+    }
+
     void IntentarCambiarODeseleccionar(int index)
     {
-        // Si presionas el mismo que ya está grande, deseleccionamos (-1)
-        if (currentSlotIndex == index)
-        {
-            currentSlotIndex = -1;
-            Debug.Log("Hotbar deseleccionada");
-        }
-        else
-        {
-            currentSlotIndex = index;
-            Debug.Log("Slot seleccionado: " + (currentSlotIndex + 1));
-        }
+        currentSlotIndex = (currentSlotIndex == index) ? -1 : index;
     }
 
     void SuavizarEscalas()
@@ -54,11 +101,16 @@ public class HotbarManager : MonoBehaviour
         for (int i = 0; i < slots.Length; i++)
         {
             if (slots[i] == null) continue;
-
-            // Si i es igual al seleccionado, va a escala grande. Si no (o si es -1), va a escala original.
             Vector3 targetScale = (i == currentSlotIndex) ? escalaOriginal * escalaSeleccionado : escalaOriginal;
-
             slots[i].localScale = Vector3.Lerp(slots[i].localScale, targetScale, Time.deltaTime * velocidadCambio);
         }
+    }
+    public bool EstaLleno()
+    {
+        foreach (GameObject item in plantasEnSlots)
+        {
+            if (item == null) return false;
+        }
+        return true;
     }
 }
