@@ -1,21 +1,37 @@
 using UnityEngine;
-using UnityEngine.SceneManagement; // ¡No olvides esta línea!
+using UnityEngine.SceneManagement;
 
 public class MenuManager : MonoBehaviour
 {
-    // Carga el juego principal
+    [Header("Ventanas Informativas")]
+    public GameObject panelAyuda; // Arrastra tu PanelAyuda aquí en el Inspector
+
+    // --- NUEVAS FUNCIONES PARA EL PANEL ---
+
+    public void AbrirAyuda()
+    {
+        if (panelAyuda != null)
+            panelAyuda.SetActive(true);
+    }
+
+    public void CerrarAyuda()
+    {
+        if (panelAyuda != null)
+            panelAyuda.SetActive(false);
+    }
+
+    // --- TUS FUNCIONES ORIGINALES ---
+
     public void Jugar()
     {
         SceneManager.LoadScene("SampleScene");
     }
 
-    // Vuelve al menú principal
     public void IrAlMenu()
     {
         SceneManager.LoadScene("MainMenu");
     }
 
-    // Por si quieres cerrar el juego
     public void Salir()
     {
         Application.Quit();

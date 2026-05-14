@@ -13,49 +13,60 @@ public class Enemy : MonoBehaviour
     private Animator anim;
     private float cronometroAtaque;
 
-    void Start()
+    [Header("Vida")]
+    public float vidaActual = 100f;
+    public float vidaMaxima = 100f; // Para resetear al reciclar
+
+    // Cacheamos el componente del jugador para no buscarlo mil veces
+    private Player playerScript;
+
+    void Awake() // Awake ocurre antes que Start y solo una vez
     {
         rb = GetComponent<Rigidbody>();
         anim = GetComponentInChildren<Animator>();
-
-        GameObject target = GameObject.FindGameObjectWithTag("Player");
-        if (target != null) player = target.transform;
-
         rb.freezeRotation = true;
+    }
 
-        // [NUEVO] Inicializamos el cronómetro al máximo para que el primer golpe sea inmediato
-        cronometroAtaque = tiempoEntreAtaques;
+    void OnEnable() // Se ejecuta cada vez que el enemigo "nace" o se "activa"
+    {
+        vidaActual = vidaMaxima; // Resetear vida
+        cronometroAtaque = tiempoEntreAtaques; // Primer golpe listo
+
+        if (player == null)
+        {
+            GameObject target = GameObject.FindGameObjectWithTag("Player");
+            if (target != null)
+            {
+                player = target.transform;
+                playerScript = player.GetComponent<Player>(); // Cacheamos el script
+            }
+        }
     }
 
     void FixedUpdate()
     {
         if (player == null) return;
 
-        float distancia = Vector3.Distance(transform.position, player.position);
+        // Usar sqrMagnitude es más rápido que Vector3.Distance
+        float distanciaSqr = (transform.position - player.position).sqrMagnitude;
+        float rangoAtaqueSqr = distanciaAtaque * distanciaAtaque;
 
-        // 1. Mirar al jugador
         Vector3 posJugador = new Vector3(player.position.x, transform.position.y, player.position.z);
         transform.LookAt(posJugador);
 
-        // 2. IA de Movimiento y Ataque
-        if (distancia > distanciaAtaque)
+        if (distanciaSqr > rangoAtaqueSqr)
         {
-            // Caminar
             Vector3 movimiento = transform.forward * velocidad * Time.fixedDeltaTime;
             rb.MovePosition(rb.position + movimiento);
 
-            if (anim != null) anim.SetBool("isWalking", true);
-
-            // [OPCIONAL] Si quieres que al alejarte se "resetee" el golpe, descomenta la línea de abajo
-            // cronometroAtaque = tiempoEntreAtaques; 
+            // Solo cambiamos el bool si es necesario (ahorra CPU)
+            if (anim != null && !anim.GetBool("isWalking")) anim.SetBool("isWalking", true);
         }
         else
         {
-            // Detenerse y Atacar
-            if (anim != null) anim.SetBool("isWalking", false);
+            if (anim != null && anim.GetBool("isWalking")) anim.SetBool("isWalking", false);
 
             cronometroAtaque += Time.fixedDeltaTime;
-
             if (cronometroAtaque >= tiempoEntreAtaques)
             {
                 AtacarRapido();
@@ -68,11 +79,24 @@ public class Enemy : MonoBehaviour
     {
         if (anim != null)
         {
-            anim.ResetTrigger("attack");
             anim.SetTrigger("attack");
         }
 
-        Player playerScript = player.GetComponent<Player>();
+        // Usamos la referencia cacheada (mucho más rápido)
         if (playerScript != null) playerScript.TakeDamage(daño);
+    }
+
+    public void TakeDamage(float cantidad)
+    {
+        vidaActual -= cantidad;
+        if (vidaActual <= 0) Morir();
+    }
+
+    void Morir()
+    {
+        if (playerScript != null) playerScript.RegistrarBajaEnemigo();
+        // En lugar de Destroy, lo "apagamos" para que el Pooler lo recicle
+        gameObject.SetActive(false);
+        Debug.Log("Enemigo reciclado");
     }
 }

@@ -11,7 +11,7 @@ GameObject:
   - component: {fileID: 1301912234534122505}
   m_Layer: 0
   m_Name: Contenedor_PlantaTier2
-  m_TagString: Untagged
+  m_TagString: Comprado
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -90,12 +90,15 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 919132149155446097, guid: 5be55102c52cdf1439b8c627c44a4155, type: 3}
       propertyPath: m_TagString
-      value: Planta
+      value: Comprado
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
     m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 5be55102c52cdf1439b8c627c44a4155, type: 3}
+      insertIndex: 1
+      addedObject: {fileID: 4724412071192620378}
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 5be55102c52cdf1439b8c627c44a4155, type: 3}
       insertIndex: -1
       addedObject: {fileID: 7344383023733236591}
@@ -119,6 +122,19 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 919132149155446097, guid: 5be55102c52cdf1439b8c627c44a4155, type: 3}
   m_PrefabInstance: {fileID: 3738069935186518410}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &4724412071192620378
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4548955705751706843}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: edb50de740af6934695aac2b8fdefb00, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ProduccionPlanta
+  puntosPorSegundo: 5
 --- !u!95 &7344383023733236591
 Animator:
   serializedVersion: 7
@@ -129,7 +145,7 @@ Animator:
   m_GameObject: {fileID: 4548955705751706843}
   m_Enabled: 1
   m_Avatar: {fileID: 0}
-  m_Controller: {fileID: 9100000, guid: db41cee2b9638b54eb7c1ef2d2bceb36, type: 2}
+  m_Controller: {fileID: 9100000, guid: 956605a550721a34fb30e565eb2fff8a, type: 2}
   m_CullingMode: 0
   m_UpdateMode: 0
   m_ApplyRootMotion: 0

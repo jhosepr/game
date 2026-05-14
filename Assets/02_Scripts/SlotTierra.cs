@@ -6,32 +6,38 @@ public class SlotTierra : MonoBehaviour
 
     [Header("Referencias de Posición")]
     public Transform puntoEscenario;
-    public Transform puntoCompra;
+    public Transform puntoCompra;   // Pera (Tier 1)
+    public Transform puntoCactus;   // Cactus (Tier 2) y Flor (Tier 3)
 
     public bool SembrarPlanta(GameObject objetoEnMano)
     {
         if (EstaOcupado) return false;
 
-        // Seguridad: Si no hay puntos, usamos el propio Slot
         if (puntoEscenario == null) puntoEscenario = this.transform;
-        if (puntoCompra == null) puntoCompra = puntoEscenario;
+        if (puntoCactus == null) puntoCactus = puntoEscenario;
 
         Transform objetoAMover = objetoEnMano.transform;
 
-        // 1. IDENTIFICAR EL CONTENEDOR (Padre)
         if (objetoEnMano.transform.parent != null && !objetoEnMano.transform.parent.CompareTag("Slot"))
         {
             objetoAMover = objetoEnMano.transform.parent;
         }
 
-        // 2. DETECCIÓN DE TAG (Revisamos raíz e hijo)
+        // DETECCIÓN DE TIPO (Prioridad Especial)
+        bool esEspecial = objetoEnMano.name.Contains("planta2") || objetoEnMano.name.Contains("planta3") ||
+                          objetoAMover.name.Contains("Tier2") || objetoAMover.name.Contains("Tier3");
+
         bool esComprado = objetoEnMano.CompareTag("Comprado") || objetoAMover.CompareTag("Comprado");
 
-        // 3. EMPARENTAMIENTO DINÁMICO
-        // Si es comprado, se vuelve hijo de 'puntoCompra'. Si no, de 'puntoEscenario'.
-        if (esComprado)
+        // EMPARENTAMIENTO (Cactus y Flor van al puntoCactus)
+        if (esEspecial)
         {
-            Debug.Log("<color=green>Sembrando en PUNTO COMPRA</color>");
+            Debug.Log("<color=orange>Sembrando Especial (Cactus/Flor) en PUNTO CACTUS</color>");
+            objetoAMover.SetParent(puntoCactus);
+        }
+        else if (esComprado)
+        {
+            Debug.Log("<color=green>Sembrando Pera en PUNTO COMPRA</color>");
             objetoAMover.SetParent(puntoCompra);
         }
         else
@@ -40,28 +46,26 @@ public class SlotTierra : MonoBehaviour
             objetoAMover.SetParent(puntoEscenario);
         }
 
-        // 4. POSICIONAMIENTO ABSOLUTO (0,0,0 respecto a su nuevo padre)
+        // POSICIONAMIENTO
         objetoAMover.localPosition = Vector3.zero;
         objetoAMover.localRotation = Quaternion.identity;
-
-        // 5. RESET DE LA PERA INTERNA (Para que esté centrada en el contenedor)
         objetoEnMano.transform.localPosition = Vector3.zero;
         objetoEnMano.transform.localRotation = Quaternion.identity;
 
-        // 6. FÍSICAS (Sin warnings)
+        // FÍSICAS (Sin warnings)
         Rigidbody pRb = objetoAMover.GetComponent<Rigidbody>();
         if (pRb == null) pRb = objetoEnMano.GetComponent<Rigidbody>();
 
         if (pRb != null)
         {
-            pRb.isKinematic = false; // Truco para Unity 6
+            pRb.isKinematic = false;
             pRb.linearVelocity = Vector3.zero;
             pRb.angularVelocity = Vector3.zero;
             pRb.isKinematic = true;
             pRb.useGravity = false;
         }
 
-        // 7. ANIMACIÓN
+        // ANIMACIÓN
         Animator anim = objetoEnMano.GetComponent<Animator>();
         if (anim == null) anim = objetoAMover.GetComponent<Animator>();
 
@@ -69,6 +73,11 @@ public class SlotTierra : MonoBehaviour
         {
             anim.enabled = true;
             anim.SetBool("estaSembrada", true);
+        }
+        ProduccionPlanta prod = objetoEnMano.GetComponentInChildren<ProduccionPlanta>();
+        if (prod != null)
+        {
+            prod.estaEnSlot = true;
         }
 
         EstaOcupado = true;

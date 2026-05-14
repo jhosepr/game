@@ -23,23 +23,20 @@ public class SistemaDiaNoche : MonoBehaviour
     [Header("Ajustes de Audio")]
     public AudioSource musicaDia;
     public AudioSource musicaNoche;
-    public float velocidadTransicion = 0.5f; // Velocidad del desvanecido
+    public float velocidadTransicion = 0.5f;
+    [Range(0, 1)] public float volumenMaximoMusica = 0.3f; // <--- NUEVA VARIABLE
 
     void Update()
     {
-        // 1. Avance del tiempo
         progresoTiempo += Time.deltaTime / duracionDiaNocheSegundos;
         if (progresoTiempo >= 1) progresoTiempo = 0;
 
-        // 2. Rotación del Reloj (Eje Z)
         float anguloZ = progresoTiempo * -360f;
         objetoGirable.localRotation = Quaternion.Euler(0, 0, anguloZ);
 
-        // 3. Rotación de la Luz (Eje X)
         float anguloXSol = (progresoTiempo * 360f) + 90f;
         luzSolar.transform.localRotation = Quaternion.Euler(anguloXSol, -90f, 0);
 
-        // 4. TRANSICIÓN DE LUZ
         float rawCos = Mathf.Cos(progresoTiempo * Mathf.PI * 2);
         float cosSaturado = Mathf.Clamp(rawCos * persistenciaLuz, -1f, 1f);
         float factorLuz = (cosSaturado + 1f) / 2f;
@@ -48,31 +45,26 @@ public class SistemaDiaNoche : MonoBehaviour
         luzSolar.color = Color.Lerp(colorNoche, colorDia, factorLuz);
         RenderSettings.ambientLight = luzSolar.color * 0.4f;
 
-        // 5. CONTROL DE MÚSICA (NUEVO)
         ControlarMusica();
     }
 
     void ControlarMusica()
     {
-        // Definimos el inicio de la noche y el día según el progreso del reloj
-        // En tu reloj, la noche empieza aproximadamente en 0.25 y termina en 0.75
         bool esNoche = (progresoTiempo >= 0.25f && progresoTiempo <= 0.75f);
 
         if (esNoche)
         {
-            // --- FASE DE NOCHE ---
-            // Sube música de noche, baja día
-            musicaNoche.volume = Mathf.MoveTowards(musicaNoche.volume, 1f, velocidadTransicion * Time.deltaTime);
+            // Sube hasta volumenMaximoMusica en lugar de 1f
+            musicaNoche.volume = Mathf.MoveTowards(musicaNoche.volume, volumenMaximoMusica, velocidadTransicion * Time.deltaTime);
             musicaDia.volume = Mathf.MoveTowards(musicaDia.volume, 0f, velocidadTransicion * Time.deltaTime);
 
             if (!musicaNoche.isPlaying) musicaNoche.Play();
         }
         else
         {
-            // --- FASE DE DÍA ---
-            // Sube música de día, baja noche
+            // Sube hasta volumenMaximoMusica en lugar de 1f
             musicaNoche.volume = Mathf.MoveTowards(musicaNoche.volume, 0f, velocidadTransicion * Time.deltaTime);
-            musicaDia.volume = Mathf.MoveTowards(musicaDia.volume, 1f, velocidadTransicion * Time.deltaTime);
+            musicaDia.volume = Mathf.MoveTowards(musicaDia.volume, volumenMaximoMusica, velocidadTransicion * Time.deltaTime);
 
             if (!musicaDia.isPlaying) musicaDia.Play();
         }

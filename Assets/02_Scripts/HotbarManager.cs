@@ -11,7 +11,7 @@ public class HotbarManager : MonoBehaviour
     public Sprite spritePera;
     public Sprite spriteCactus;
     public Sprite spriteFlor;
-
+    public Sprite spriteBomba;
     [Header("Inventario")]
     public GameObject[] plantasEnSlots = new GameObject[6];
 
@@ -67,6 +67,7 @@ public class HotbarManager : MonoBehaviour
 
     Sprite ObtenerSpritePorNombre(string nombre)
     {
+        if (nombre.Contains("bomba")) return spriteBomba; // Cambiado a minúscula
         if (nombre.Contains("Tier2")) return spriteCactus;
         if (nombre.Contains("Tier3")) return spriteFlor;
         return spritePera;

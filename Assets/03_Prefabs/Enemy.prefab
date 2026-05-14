@@ -53,6 +53,8 @@ MonoBehaviour:
   "da\xF1o": 10
   distanciaAtaque: 1.8
   tiempoEntreAtaques: 1.2
+  vidaActual: 100
+  vidaMaxima: 100
 --- !u!33 &4254733786650426074
 MeshFilter:
   m_ObjectHideFlags: 0
@@ -216,6 +218,10 @@ PrefabInstance:
       propertyPath: m_Controller
       value: 
       objectReference: {fileID: 9100000, guid: d32892fdcec794a4e915ef8aa5ef67ec, type: 2}
+    - target: {fileID: 5866666021909216657, guid: 908970adc9ac33b4a84a6aaaee05c7f0, type: 3}
+      propertyPath: m_CullingMode
+      value: 2
+      objectReference: {fileID: 0}
     - target: {fileID: 5866666021909216657, guid: 908970adc9ac33b4a84a6aaaee05c7f0, type: 3}
       propertyPath: m_ApplyRootMotion
       value: 0
