@@ -10346,8 +10346,8 @@ MonoBehaviour:
   progresoTiempo: 0
   objetoGirable: {fileID: 1547063365}
   luzSolar: {fileID: 410087040}
-  intensidadDiaMax: 1.7
-  intensidadNocheMin: 0.02
+  intensidadDiaMax: 3
+  intensidadNocheMin: 0
   colorDia: {r: 1, g: 1, b: 0.9, a: 1}
   colorNoche: {r: 0.1, g: 0.1, b: 0.25, a: 1}
   persistenciaLuz: 5
